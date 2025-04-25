@@ -1,13 +1,43 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Environment } from "@shared/schema";
+import { Environment, photoTypeEnum } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Camera } from "@/lib/camera";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Camera as CameraIcon, Image as ImageIcon, RefreshCcw } from "lucide-react";
+import { ArrowLeft, Camera as CameraIcon, Image as ImageIcon, RefreshCcw, Eye, Wrench, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { Logo } from "@/components/ui/logo";
+
+// Tipos de fotos correspondentes ao enum no banco de dados
+type PhotoType = typeof photoTypeEnum.enumValues[number];
+
+// Configurações para os tipos de fotos
+const photoTypeConfig = {
+  'vista_ampla': {
+    title: 'Vista Ampla',
+    icon: Eye,
+    description: 'Captura uma visão geral do ambiente para contextualização',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100'
+  },
+  'servicos_itens': {
+    title: 'Serviços/Itens',
+    icon: Wrench,
+    description: 'Registre equipamentos, estruturas e instalações',
+    color: 'text-green-600',
+    bgColor: 'bg-green-100'
+  },
+  'detalhes': {
+    title: 'Detalhes',
+    icon: Info,
+    description: 'Capture detalhes específicos, problemas ou pontos de atenção',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-100'
+  }
+};
 
 export default function Capture() {
   const { id } = useParams();
@@ -22,6 +52,7 @@ export default function Capture() {
   const [captureMode, setCaptureMode] = useState<"camera" | "upload">("camera");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
+  const [photoType, setPhotoType] = useState<PhotoType | null>(null);
   
   const environmentId = parseInt(id || "0");
   
@@ -32,7 +63,7 @@ export default function Capture() {
   
   // Initialize camera when component mounts and camera mode is selected
   useEffect(() => {
-    if (captureMode === "camera" && videoRef.current && !camera) {
+    if (captureMode === "camera" && videoRef.current && !camera && photoType) {
       const newCamera = new Camera({
         element: videoRef.current,
         facingMode: "environment",
@@ -67,7 +98,7 @@ export default function Capture() {
         setCameraActive(false);
       }
     };
-  }, [videoRef, captureMode, toast]);
+  }, [videoRef, captureMode, toast, photoType]);
   
   // Switch to upload mode if camera initialization fails
   useEffect(() => {
@@ -77,13 +108,14 @@ export default function Capture() {
   }, [cameraError, captureMode]);
   
   const capturePhoto = () => {
-    if (!camera) return;
+    if (!camera || !photoType) return;
     
     try {
       const photoData = camera.capturePhoto();
       if (photoData) {
-        // Save captured photo in session storage to avoid passing large data in URL
+        // Save captured photo and type in session storage
         sessionStorage.setItem('capturedPhoto', photoData);
+        sessionStorage.setItem('photoType', photoType);
         setLocation(`/environments/${environmentId}/review`);
       } else {
         toast({
@@ -120,9 +152,10 @@ export default function Capture() {
   };
   
   const useSelectedImage = () => {
-    if (!selectedImagePreview) return;
+    if (!selectedImagePreview || !photoType) return;
     
     sessionStorage.setItem('capturedPhoto', selectedImagePreview);
+    sessionStorage.setItem('photoType', photoType);
     setLocation(`/environments/${environmentId}/review`);
   };
   
@@ -157,17 +190,80 @@ export default function Capture() {
     setLocation(surveyId ? `/surveys/${surveyId}/environments` : '/');
   };
   
+  // Se o tipo de foto não estiver selecionado, mostre a tela de seleção de tipo
+  if (!photoType) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
+        {/* Header */}
+        <header className="p-4 flex justify-between items-center">
+          <Button variant="ghost" size="icon" onClick={navigateBack} className="rounded-full h-10 w-10">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Logo size="sm" />
+          <div className="w-10"></div> {/* Spacer to balance the header */}
+        </header>
+        
+        {/* Title */}
+        <div className="pt-2 pb-6 text-center">
+          <h1 className="text-2xl font-bold text-gray-800">Tipo de Foto</h1>
+          <p className="text-muted-foreground mt-1">
+            {isLoading ? "Carregando..." : environment?.name}
+          </p>
+        </div>
+        
+        {/* Photo Type Selection */}
+        <div className="flex-1 px-6 pb-6">
+          <div className="max-w-md mx-auto space-y-4">
+            <p className="text-center text-muted-foreground mb-2">
+              Selecione o tipo de foto que deseja capturar:
+            </p>
+            
+            {Object.entries(photoTypeConfig).map(([type, config]) => {
+              const Icon = config.icon;
+              return (
+                <Card 
+                  key={type}
+                  className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setPhotoType(type as PhotoType)}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 rounded-full ${config.bgColor} flex items-center justify-center ${config.color} shrink-0`}>
+                      <Icon size={24} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-800">{config.title}</h3>
+                      <p className="text-sm text-gray-500">{config.description}</p>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // A UI após selecionar o tipo de foto
+  const selectedPhotoConfig = photoTypeConfig[photoType];
+  const Icon = selectedPhotoConfig.icon;
+  
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Header */}
       <header className="bg-white py-4 px-6 shadow-sm">
         <div className="flex justify-between items-center">
-          <Button variant="ghost" size="icon" onClick={navigateBack}>
+          <Button variant="ghost" size="icon" onClick={() => setPhotoType(null)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold text-secondary truncate max-w-[200px]">
-            {isLoading ? "Carregando..." : environment?.name || "Ambiente"}
-          </h1>
+          <div className="flex flex-col items-center">
+            <h1 className="text-lg font-semibold text-secondary">
+              {selectedPhotoConfig.title}
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {!isLoading && environment?.name}
+            </p>
+          </div>
           <div className="w-8"></div> {/* Spacer */}
         </div>
       </header>
@@ -226,6 +322,16 @@ export default function Capture() {
               </div>
             )}
             
+            {/* Camera overlay - shows current photo type */}
+            {cameraActive && (
+              <div className="absolute top-4 inset-x-0 flex items-center justify-center">
+                <div className={`${selectedPhotoConfig.bgColor} ${selectedPhotoConfig.color} px-4 py-2 rounded-full flex items-center shadow-md`}>
+                  <Icon className="mr-2 h-4 w-4" />
+                  <span className="font-medium text-sm">{selectedPhotoConfig.title}</span>
+                </div>
+              </div>
+            )}
+            
             {cameraActive && (
               <div className="absolute bottom-10 inset-x-0 flex items-center justify-center">
                 <button 
@@ -249,6 +355,12 @@ export default function Capture() {
               className="hidden"
               onChange={handleFileChange}
             />
+            
+            {/* Current photo type indicator */}
+            <div className={`${selectedPhotoConfig.bgColor} ${selectedPhotoConfig.color} px-4 py-2 rounded-full flex items-center shadow-md mb-6`}>
+              <Icon className="mr-2 h-4 w-4" />
+              <span className="font-medium text-sm">{selectedPhotoConfig.title}</span>
+            </div>
             
             {!selectedImagePreview ? (
               <div className="flex flex-col items-center justify-center w-full h-full max-w-md mx-auto border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer" onClick={triggerFileInput}>

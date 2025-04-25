@@ -1,13 +1,42 @@
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Environment } from "@shared/schema";
+import { Environment, photoTypeEnum } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, Wrench, Info } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Logo } from "@/components/ui/logo";
+
+// Tipos de fotos correspondentes ao enum no banco de dados
+type PhotoType = typeof photoTypeEnum.enumValues[number];
+
+// Configurações para os tipos de fotos
+const photoTypeConfig = {
+  'vista_ampla': {
+    title: 'Vista Ampla',
+    icon: Eye,
+    description: 'Captura uma visão geral do ambiente para contextualização',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100'
+  },
+  'servicos_itens': {
+    title: 'Serviços/Itens',
+    icon: Wrench,
+    description: 'Registre equipamentos, estruturas e instalações',
+    color: 'text-green-600',
+    bgColor: 'bg-green-100'
+  },
+  'detalhes': {
+    title: 'Detalhes',
+    icon: Info,
+    description: 'Capture detalhes específicos, problemas ou pontos de atenção',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-100'
+  }
+};
 
 export default function PhotoReview() {
   const { id } = useParams();
@@ -16,24 +45,28 @@ export default function PhotoReview() {
   const queryClient = useQueryClient();
   
   const [photoData, setPhotoData] = useState<string | null>(null);
+  const [photoType, setPhotoType] = useState<PhotoType | null>(null);
   const [observation, setObservation] = useState("");
   
-  const environmentId = parseInt(id);
+  const environmentId = parseInt(id || "0");
   
   const { data: environment, isLoading } = useQuery<Environment>({
     queryKey: [`/api/environments/${environmentId}`],
-    enabled: !isNaN(environmentId),
+    enabled: !isNaN(environmentId) && environmentId > 0,
   });
   
   // Load photo from session storage when component mounts
   useEffect(() => {
     const savedPhoto = sessionStorage.getItem('capturedPhoto');
-    if (savedPhoto) {
+    const savedPhotoType = sessionStorage.getItem('photoType') as PhotoType | null;
+    
+    if (savedPhoto && savedPhotoType && Object.keys(photoTypeConfig).includes(savedPhotoType)) {
       setPhotoData(savedPhoto);
+      setPhotoType(savedPhotoType);
     } else {
       toast({
-        title: "Foto não encontrada",
-        description: "Não foi possível recuperar a foto capturada",
+        title: "Dados não encontrados",
+        description: "Não foi possível recuperar a foto capturada ou seu tipo",
         variant: "destructive",
       });
       navigateToCapture();
@@ -42,12 +75,13 @@ export default function PhotoReview() {
   
   const savePhotoMutation = useMutation({
     mutationFn: async () => {
-      if (!photoData) throw new Error("No photo data");
+      if (!photoData || !photoType) throw new Error("Dados da foto incompletos");
       
       const res = await apiRequest("POST", "/api/photos", {
         environmentId,
         imageData: photoData,
         observation,
+        photoType
       });
       return res.json();
     },
@@ -59,6 +93,7 @@ export default function PhotoReview() {
       
       // Clear stored photo
       sessionStorage.removeItem('capturedPhoto');
+      sessionStorage.removeItem('photoType');
       
       // Navigate back to environments
       const surveyId = environment?.surveyId;
@@ -90,72 +125,89 @@ export default function PhotoReview() {
     navigateToCapture();
   };
   
+  if (!photoType || !photoData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-sky-100 p-4">
+        <Logo size="md" />
+        <p className="mt-4 text-gray-500">Carregando...</p>
+      </div>
+    );
+  }
+  
+  // Obtenha a configuração do tipo de foto selecionado
+  const selectedPhotoConfig = photoTypeConfig[photoType];
+  const TypeIcon = selectedPhotoConfig.icon;
+  
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
       {/* Header */}
-      <header className="bg-white py-4 px-6 shadow-sm">
-        <div className="flex justify-between items-center">
-          <Button variant="ghost" size="icon" onClick={navigateBack}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-xl font-semibold text-secondary truncate max-w-[200px]">
-            {isLoading ? "Carregando..." : environment?.name || "Ambiente"}
-          </h1>
-          <div className="w-8"></div> {/* Spacer */}
-        </div>
+      <header className="p-4 flex justify-between items-center">
+        <Button variant="ghost" size="icon" onClick={navigateBack} className="rounded-full h-10 w-10">
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <Logo size="sm" />
+        <div className="w-10"></div> {/* Spacer to balance the header */}
       </header>
       
+      {/* Title */}
+      <div className="pt-2 pb-6 text-center">
+        <h1 className="text-2xl font-bold text-gray-800">Revisar Foto</h1>
+        <p className="text-muted-foreground mt-1">
+          {isLoading ? "Carregando..." : environment?.name}
+        </p>
+      </div>
+      
       {/* Photo Preview */}
-      <div className="flex-1 p-6 overflow-y-auto">
-        <div className="max-w-md mx-auto space-y-4">
+      <div className="flex-1 px-6 pb-6 overflow-y-auto">
+        <div className="max-w-md mx-auto">
+          {/* Photo Type Badge */}
+          <div className="flex justify-center mb-4">
+            <div className={`${selectedPhotoConfig.bgColor} ${selectedPhotoConfig.color} px-4 py-2 rounded-full flex items-center shadow-md`}>
+              <TypeIcon className="mr-2 h-4 w-4" />
+              <span className="font-medium text-sm">{selectedPhotoConfig.title}</span>
+            </div>
+          </div>
+          
           {/* Photo */}
-          <div className="aspect-[3/4] w-full bg-gray-200 rounded-lg overflow-hidden">
-            {photoData ? (
-              <img 
-                src={photoData} 
-                alt="Foto capturada" 
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <p className="text-gray-500">Carregando foto...</p>
-              </div>
-            )}
+          <div className="aspect-[3/4] w-full bg-white rounded-xl overflow-hidden shadow-md">
+            <img 
+              src={photoData} 
+              alt="Foto capturada" 
+              className="w-full h-full object-cover"
+            />
           </div>
           
           {/* Observations */}
-          <div>
-            <label htmlFor="observations" className="block text-sm font-medium text-secondary mb-2">
+          <div className="mt-6 bg-white p-4 rounded-xl shadow-md">
+            <label htmlFor="observations" className="block text-sm font-medium text-gray-700 mb-2">
               Observações
             </label>
             <Textarea 
               id="observations" 
-              placeholder="Adicione observações sobre esta foto"
-              className="h-24"
+              placeholder="Adicione observações sobre esta foto (opcional)"
+              className="h-24 bg-gray-50 border-gray-200"
               value={observation}
               onChange={(e) => setObservation(e.target.value)}
             />
           </div>
-        </div>
-      </div>
-      
-      {/* Footer with Buttons */}
-      <div className="p-6 bg-white shadow-inner">
-        <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-          <Button 
-            variant="outline"
-            className="py-6"
-            onClick={navigateToCapture}
-          >
-            Tirar Novamente
-          </Button>
-          <Button 
-            className="py-6"
-            onClick={savePhoto}
-            disabled={!photoData || savePhotoMutation.isPending}
-          >
-            {savePhotoMutation.isPending ? "Salvando..." : "Confirmar"}
-          </Button>
+          
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 gap-4 mt-6">
+            <Button 
+              variant="outline"
+              className="py-4 bg-white"
+              onClick={navigateToCapture}
+            >
+              Tirar Novamente
+            </Button>
+            <Button 
+              className="py-4"
+              onClick={savePhoto}
+              disabled={savePhotoMutation.isPending}
+            >
+              {savePhotoMutation.isPending ? "Salvando..." : "Confirmar"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

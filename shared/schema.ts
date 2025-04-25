@@ -62,12 +62,16 @@ export const insertEnvironmentSchema = createInsertSchema(environments).pick({
   name: true,
 });
 
+// Photo type enum
+export const photoTypeEnum = pgEnum('photo_type', ['vista_ampla', 'servicos_itens', 'detalhes']);
+
 // Photo schema
 export const photos = pgTable("photos", {
   id: serial("id").primaryKey(),
   environmentId: integer("environment_id").notNull().references(() => environments.id),
   imageData: text("image_data").notNull(), // Base64 encoded image
   observation: text("observation"),
+  photoType: photoTypeEnum("photo_type").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -75,6 +79,7 @@ export const insertPhotoSchema = createInsertSchema(photos).pick({
   environmentId: true,
   imageData: true,
   observation: true,
+  photoType: true,
 });
 
 // Type exports
