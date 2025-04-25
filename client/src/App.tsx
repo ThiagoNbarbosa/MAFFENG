@@ -12,11 +12,13 @@ import InitializeSurvey from "@/pages/survey/initialize-survey";
 import Environments from "@/pages/survey/environments";
 import Capture from "@/pages/survey/capture";
 import PhotoReview from "@/pages/survey/photo-review";
+import SurveysPage from "@/pages/surveys-page";
 
 function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/surveys" component={SurveysPage} />
       <ProtectedRoute path="/surveys/new" component={InitializeSurvey} />
       <ProtectedRoute path="/surveys/:id/environments" component={Environments} />
       <ProtectedRoute path="/environments/:id/capture" component={Capture} />
