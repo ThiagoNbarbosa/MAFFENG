@@ -23,6 +23,14 @@ export const surveys = pgTable("surveys", {
   userId: integer("user_id").notNull().references(() => users.id),
   agencyName: text("agency_name").notNull(),
   prefix: text("prefix").notNull(),
+  // Endereço
+  street: text("street").notNull(),
+  number: text("number").notNull(),
+  neighborhood: text("neighborhood").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  cep: text("cep").notNull(),
+  // Responsável
   managerName: text("manager_name").notNull(),
   registration: text("registration").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -32,6 +40,12 @@ export const insertSurveySchema = createInsertSchema(surveys).pick({
   userId: true,
   agencyName: true,
   prefix: true,
+  street: true,
+  number: true,
+  neighborhood: true,
+  city: true,
+  state: true,
+  cep: true,
   managerName: true,
   registration: true,
 });
