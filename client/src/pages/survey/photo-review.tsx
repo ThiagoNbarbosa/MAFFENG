@@ -47,6 +47,7 @@ export default function PhotoReview() {
   const [photoData, setPhotoData] = useState<string | null>(null);
   const [photoType, setPhotoType] = useState<PhotoType | null>(null);
   const [observation, setObservation] = useState("");
+  const [selectedServiceItem, setSelectedServiceItem] = useState<string | null>(null);
   
   const environmentId = parseInt(id || "0");
   
@@ -59,10 +60,15 @@ export default function PhotoReview() {
   useEffect(() => {
     const savedPhoto = sessionStorage.getItem('capturedPhoto');
     const savedPhotoType = sessionStorage.getItem('photoType') as PhotoType | null;
+    const savedServiceItem = sessionStorage.getItem('selectedServiceItem');
     
     if (savedPhoto && savedPhotoType && Object.keys(photoTypeConfig).includes(savedPhotoType)) {
       setPhotoData(savedPhoto);
       setPhotoType(savedPhotoType);
+      
+      if (savedPhotoType === 'servicos_itens' && savedServiceItem) {
+        setSelectedServiceItem(savedServiceItem);
+      }
     } else {
       toast({
         title: "Dados não encontrados",
@@ -91,9 +97,10 @@ export default function PhotoReview() {
         description: "A foto foi salva com sucesso",
       });
       
-      // Clear stored photo
+      // Clear stored photo data
       sessionStorage.removeItem('capturedPhoto');
       sessionStorage.removeItem('photoType');
+      sessionStorage.removeItem('selectedServiceItem');
       
       // Navigate back to environments
       const surveyId = environment?.surveyId;

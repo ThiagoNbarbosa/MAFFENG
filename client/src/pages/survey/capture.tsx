@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Environment, photoTypeEnum } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Camera } from "@/lib/camera";
+import { ServiceItemSearch } from "@/components/survey/service-item-search";
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Camera as CameraIcon, Image as ImageIcon, RefreshCcw, Eye, Wrench, Info } from "lucide-react";
@@ -53,6 +54,8 @@ export default function Capture() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
   const [photoType, setPhotoType] = useState<PhotoType | null>(null);
+  const [selectedServiceItem, setSelectedServiceItem] = useState<string | null>(null);
+  const [showServiceItemSearch, setShowServiceItemSearch] = useState<boolean>(false);
   
   const environmentId = parseInt(id || "0");
   
@@ -190,6 +193,16 @@ export default function Capture() {
     setLocation(surveyId ? `/surveys/${surveyId}/environments` : '/');
   };
   
+  // Função de tratamento da seleção de tipo de foto
+  const handlePhotoTypeSelection = (type: PhotoType) => {
+    setPhotoType(type);
+    
+    // Se for "servicos_itens", abrir a tela de pesquisa
+    if (type === 'servicos_itens') {
+      setShowServiceItemSearch(true);
+    }
+  };
+  
   // Se o tipo de foto não estiver selecionado, mostre a tela de seleção de tipo
   if (!photoType) {
     return (
@@ -224,7 +237,7 @@ export default function Capture() {
                 <Card 
                   key={type}
                   className="p-4 cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setPhotoType(type as PhotoType)}
+                  onClick={() => handlePhotoTypeSelection(type as PhotoType)}
                 >
                   <div className="flex items-start gap-4">
                     <div className={`w-12 h-12 rounded-full ${config.bgColor} flex items-center justify-center ${config.color} shrink-0`}>
@@ -241,6 +254,24 @@ export default function Capture() {
           </div>
         </div>
       </div>
+    );
+  }
+  
+  // Mostrar a tela de pesquisa de serviços/itens, se necessário
+  if (photoType === 'servicos_itens' && showServiceItemSearch) {
+    return (
+      <ServiceItemSearch 
+        onSelect={(item) => {
+          setSelectedServiceItem(item);
+          setShowServiceItemSearch(false);
+          // Armazene o item selecionado para uso na revisão da foto
+          sessionStorage.setItem('selectedServiceItem', item);
+        }}
+        onCancel={() => {
+          setPhotoType(null);
+          setShowServiceItemSearch(false);
+        }}
+      />
     );
   }
   
