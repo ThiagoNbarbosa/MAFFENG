@@ -23,13 +23,14 @@ import { Logo } from "@/components/ui/logo";
 const surveyFormSchema = z.object({
   agencyName: z.string().min(1, { message: "Nome da agência é obrigatório" }),
   prefix: z.string().min(1, { message: "Prefixo é obrigatório" }),
-  street: z.string().min(1, { message: "Rua é obrigatória" }),
-  number: z.string().min(1, { message: "Número é obrigatório" }),
-  neighborhood: z.string().min(1, { message: "Bairro é obrigatório" }),
-  city: z.string().min(1, { message: "Cidade é obrigatória" }),
-  state: z.string().min(1, { message: "Estado é obrigatório" }),
-  cep: z.string().min(1, { message: "CEP é obrigatório" }),
-  managerName: z.string().min(1, { message: "Nome do gerente é obrigatório" }),
+  // Mantendo os campos no esquema para compatibilidade, mas com valores padrão
+  street: z.string().default(""),
+  number: z.string().default(""),
+  neighborhood: z.string().default(""),
+  city: z.string().default(""),
+  state: z.string().default(""),
+  cep: z.string().default(""),
+  managerName: z.string().min(1, { message: "Nome do responsável é obrigatório" }),
   registration: z.string().min(1, { message: "Matrícula é obrigatória" }),
 });
 
@@ -44,12 +45,12 @@ export default function InitializeSurvey() {
     defaultValues: {
       agencyName: "",
       prefix: "",
-      street: "",
-      number: "",
-      neighborhood: "",
-      city: "",
-      state: "",
-      cep: "",
+      street: "N/A",
+      number: "N/A",
+      neighborhood: "N/A",
+      city: "N/A",
+      state: "N/A",
+      cep: "N/A",
       managerName: "",
       registration: "",
     },
@@ -138,97 +139,7 @@ export default function InitializeSurvey() {
                 />
               </div>
               
-              <div className="space-y-5 border-b border-gray-200 pb-5">
-                <h2 className="font-bold text-lg text-primary">Endereço</h2>
-                
-                <FormField
-                  control={form.control}
-                  name="street"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Rua</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Digite a rua" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Número</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nº" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="cep"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CEP</FormLabel>
-                        <FormControl>
-                          <Input placeholder="CEP" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="neighborhood"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bairro</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Digite o bairro" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Cidade</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Cidade" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="state"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estado</FormLabel>
-                        <FormControl>
-                          <Input placeholder="UF" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
+              {/* A seção de endereço foi removida conforme solicitado */}
               
               <div className="space-y-5">
                 <h2 className="font-bold text-lg text-primary">Responsável pelo Levantamento</h2>
@@ -240,7 +151,7 @@ export default function InitializeSurvey() {
                     <FormItem>
                       <FormLabel>Nome do Responsável</FormLabel>
                       <FormControl>
-                        <Input placeholder="Digite o nome do responsável" {...field} />
+                        <Input placeholder="Digite o nome do gerente" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
