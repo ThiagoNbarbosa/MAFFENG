@@ -162,14 +162,21 @@ export default function Environments() {
                     className={`p-3 rounded-lg hover:bg-gray-50 flex justify-between items-center cursor-pointer
                       ${isEnvironmentAdded(env) ? 'opacity-50' : ''}`}
                     onClick={() => {
-                      if (!isEnvironmentAdded(env) && !createEnvironmentMutation.isPending) {
-                        handleAddEnvironment(env);
-                      } else if (isEnvironmentAdded(env)) {
+                      if (isEnvironmentAdded(env)) {
                         toast({
                           title: "Ambiente já adicionado",
                           description: `"${env}" já está na sua lista de ambientes`,
+                          variant: "destructive"
                         });
+                        return;
                       }
+                      if (!createEnvironmentMutation.isPending) {
+                        handleAddEnvironment(env);
+                      }
+                    }}
+                    style={{ 
+                      pointerEvents: isEnvironmentAdded(env) ? 'none' : 'auto',
+                      opacity: isEnvironmentAdded(env) ? 0.5 : 1
                     }}
                   >
                     <div className="flex items-center">
