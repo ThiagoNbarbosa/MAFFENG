@@ -17,6 +17,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(401).json({ message: "Unauthorized" });
   };
 
+  // Middleware para verificar se o usuário é admin
+  const ensureAdmin = (req: any, res: any, next: any) => {
+    if (req.isAuthenticated() && req.user.username === "admin") {
+      return next();
+    }
+    res.status(403).json({ message: "Forbidden - Admin access required" });
+  };
+
+  // Rotas administrativas
+  app.get("/api/admin/users", ensureAdmin, async (req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/admin/surveys", ensureAdmin, async (req, res) => {
+    try {
+      const allSurveys = await storage.getAllSurveys();
+      res.json(allSurveys);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch surveys" });
+    }
+  });
+
   // Survey routes
   app.post("/api/surveys", ensureAuthenticated, async (req, res) => {
     try {

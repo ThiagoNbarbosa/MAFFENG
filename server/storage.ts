@@ -5,6 +5,15 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { pool } from "./db";
 
+// Métodos administrativos
+export const getAllUsers = async (): Promise<User[]> => {
+  return await db.select().from(users);
+};
+
+export const getAllSurveys = async (): Promise<Survey[]> => {
+  return await db.select().from(surveys);
+};
+
 const PostgresSessionStore = connectPgSimple(session);
 
 export interface IStorage {
