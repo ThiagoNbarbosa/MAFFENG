@@ -61,24 +61,8 @@ export default function AuthPage() {
         <CardContent className="pt-6 pb-8 px-8">
           <CardTitle className="text-center text-2xl mb-6">Login</CardTitle>
           <CardDescription className="text-center mb-8">
-            Digite seu e-mail e senha para acessar o sistema ou registre-se
+            Digite seu e-mail e senha para acessar o sistema
           </CardDescription>
-
-          <Button 
-            variant="outline"
-            className="w-full mb-6"
-            onClick={() => {
-              const email = prompt("Digite seu email:");
-              const username = prompt("Digite seu nome de usuário:"); 
-              const password = prompt("Digite sua senha (mínimo 6 caracteres):");
-              
-              if (email && username && password) {
-                registerMutation.mutate({ email, username, password });
-              }
-            }}
-          >
-            Registrar Nova Conta
-          </Button>
           
           <Form {...loginForm}>
             <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-6">
