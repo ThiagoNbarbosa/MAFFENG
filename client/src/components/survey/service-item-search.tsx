@@ -32,6 +32,9 @@ export function ServiceItemSearch({ onSelect, onCancel }: ServiceItemSearchProps
   const handleConfirm = () => {
     if (selectedServiceItem) {
       onSelect(selectedServiceItem);
+      // Força o retorno para a câmera após seleção
+      setSelectedServiceItem(null);
+      setSearchQuery("");
     }
   };
   
