@@ -175,6 +175,16 @@ export default function PhotoReview() {
             </div>
           </div>
           
+          {/* Service Item Display (if applicable) */}
+          {photoType === 'servicos_itens' && selectedServiceItem && (
+            <div className="bg-white px-4 py-3 rounded-lg shadow-sm mb-4 flex items-center">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
+                <Wrench className="h-4 w-4" />
+              </div>
+              <div className="text-sm font-medium">{selectedServiceItem}</div>
+            </div>
+          )}
+          
           {/* Photo */}
           <div className="aspect-[3/4] w-full bg-white rounded-xl overflow-hidden shadow-md">
             <img 
