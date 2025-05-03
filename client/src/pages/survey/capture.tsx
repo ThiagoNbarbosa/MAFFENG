@@ -399,14 +399,46 @@ export default function Capture() {
             )}
             
             {cameraActive && (
-              <div className="absolute bottom-10 inset-x-0 flex items-center justify-center">
-                <button 
-                  className="w-20 h-20 rounded-full bg-white flex items-center justify-center border-2 border-gray-400 focus:outline-none"
-                  onClick={capturePhoto}
-                >
-                  <div className="w-16 h-16 rounded-full border-2 border-gray-500"></div>
-                </button>
-              </div>
+              <>
+                <div className="absolute bottom-10 inset-x-0 flex items-center justify-center">
+                  <button 
+                    className="w-20 h-20 rounded-full bg-white flex items-center justify-center border-2 border-gray-400 focus:outline-none"
+                    onClick={capturePhoto}
+                  >
+                    <div className="w-16 h-16 rounded-full border-2 border-gray-500"></div>
+                  </button>
+                </div>
+                
+                {/* Botão para alternar câmera */}
+                <div className="absolute top-4 right-4">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="bg-black/30 hover:bg-black/50 text-white rounded-full h-10 w-10"
+                    onClick={() => {
+                      if (camera) {
+                        // Informa ao usuário que está alternando câmeras
+                        toast({
+                          title: "Alternando câmera",
+                          description: "Tentando alternar entre câmeras disponíveis...",
+                        });
+                        
+                        // Tenta alternar a câmera
+                        camera.toggleCamera().catch(error => {
+                          console.error("Erro ao alternar câmera:", error);
+                          toast({
+                            title: "Erro ao alternar câmera",
+                            description: "Não foi possível alternar entre as câmeras.",
+                            variant: "destructive",
+                          });
+                        });
+                      }
+                    }}
+                  >
+                    <RefreshCcw className="h-5 w-5" />
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         </TabsContent>
