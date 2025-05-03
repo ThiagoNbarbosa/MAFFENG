@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { Survey } from "@shared/schema";
 import { useLocation } from "wouter";
-import { Folder, Plus, LogOut } from "lucide-react";
+import { Folder, Plus, LogOut, User } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 
 export default function HomePage() {
@@ -28,7 +28,13 @@ export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
       {/* Header */}
-      <header className="p-4 flex justify-end">
+      <header className="p-4 flex justify-end gap-4">
+        <button 
+          onClick={() => setLocation("/account")} 
+          className="text-gray-600 hover:text-blue-500 transition-colors"
+        >
+          <User className="h-6 w-6" />
+        </button>
         <button 
           onClick={handleLogout} 
           disabled={logoutMutation.isPending}

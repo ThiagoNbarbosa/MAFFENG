@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "./lib/protected-route";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
+import AccountPage from "@/pages/account-page";
 import InitializeSurvey from "@/pages/survey/initialize-survey";
 import Environments from "@/pages/survey/environments";
 import Capture from "@/pages/survey/capture";
@@ -18,6 +19,7 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/account" component={AccountPage} />
       <ProtectedRoute path="/surveys" component={SurveysPage} />
       <ProtectedRoute path="/surveys/new" component={InitializeSurvey} />
       <ProtectedRoute path="/surveys/:id/environments" component={Environments} />
