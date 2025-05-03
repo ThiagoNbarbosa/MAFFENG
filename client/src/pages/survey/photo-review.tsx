@@ -114,6 +114,9 @@ export default function PhotoReview() {
       sessionStorage.removeItem('capturedPhoto');
       sessionStorage.removeItem('photoType');
       sessionStorage.removeItem('selectedServiceItem');
+      sessionStorage.removeItem('paintingWidth');
+      sessionStorage.removeItem('paintingHeight');
+      sessionStorage.removeItem('paintingArea');
       
       // Navigate back to environments
       const surveyId = environment?.surveyId;
@@ -195,6 +198,37 @@ export default function PhotoReview() {
                 <Wrench className="h-4 w-4" />
               </div>
               <div className="text-sm font-medium">{selectedServiceItem}</div>
+            </div>
+          )}
+          
+          {/* Painting Dimensions (if applicable) */}
+          {photoType === 'servicos_itens' && selectedServiceItem && 
+           selectedServiceItem.toLowerCase().includes('pintura') && 
+           paintingWidth && paintingHeight && paintingArea && (
+            <div className="bg-white px-4 py-3 rounded-lg shadow-sm mb-4">
+              <div className="flex items-center mb-2">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
+                  <Calculator className="h-4 w-4" />
+                </div>
+                <div className="text-sm font-medium">Dimensões da Pintura</div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-sm ml-11">
+                <div className="flex items-center">
+                  <Ruler className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
+                  <span className="text-gray-600">Largura:</span>
+                  <span className="ml-1 font-medium">{paintingWidth} m</span>
+                </div>
+                <div className="flex items-center">
+                  <Ruler className="h-3.5 w-3.5 mr-1.5 text-gray-500" />
+                  <span className="text-gray-600">Altura:</span>
+                  <span className="ml-1 font-medium">{paintingHeight} m</span>
+                </div>
+                <div className="flex items-center font-semibold text-green-700">
+                  <Calculator className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="text-gray-600">Área:</span>
+                  <span className="ml-1 font-medium">{paintingArea} m²</span>
+                </div>
+              </div>
             </div>
           )}
           
