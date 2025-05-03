@@ -6,7 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Eye, Wrench, Info } from "lucide-react";
+import { ArrowLeft, Eye, Wrench, Info, Ruler, Calculator } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/ui/logo";
 
@@ -48,6 +48,9 @@ export default function PhotoReview() {
   const [photoType, setPhotoType] = useState<PhotoType | null>(null);
   const [observation, setObservation] = useState("");
   const [selectedServiceItem, setSelectedServiceItem] = useState<string | null>(null);
+  const [paintingWidth, setPaintingWidth] = useState<string | null>(null);
+  const [paintingHeight, setPaintingHeight] = useState<string | null>(null);
+  const [paintingArea, setPaintingArea] = useState<string | null>(null);
   
   const environmentId = parseInt(id || "0");
   
@@ -61,6 +64,9 @@ export default function PhotoReview() {
     const savedPhoto = sessionStorage.getItem('capturedPhoto');
     const savedPhotoType = sessionStorage.getItem('photoType') as PhotoType | null;
     const savedServiceItem = sessionStorage.getItem('selectedServiceItem');
+    const savedWidth = sessionStorage.getItem('paintingWidth');
+    const savedHeight = sessionStorage.getItem('paintingHeight');
+    const savedArea = sessionStorage.getItem('paintingArea');
     
     if (savedPhoto && savedPhotoType && Object.keys(photoTypeConfig).includes(savedPhotoType)) {
       setPhotoData(savedPhoto);
@@ -68,6 +74,13 @@ export default function PhotoReview() {
       
       if (savedPhotoType === 'servicos_itens' && savedServiceItem) {
         setSelectedServiceItem(savedServiceItem);
+        
+        // Se for um item de pintura, carregar as dimensões
+        if (savedServiceItem.toLowerCase().includes('pintura') && savedWidth && savedHeight && savedArea) {
+          setPaintingWidth(savedWidth);
+          setPaintingHeight(savedHeight);
+          setPaintingArea(savedArea);
+        }
       }
     } else {
       toast({

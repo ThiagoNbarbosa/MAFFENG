@@ -5,6 +5,7 @@ import { Environment, photoTypeEnum } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Camera } from "@/lib/camera";
 import { ServiceItemSearch } from "@/components/survey/service-item-search";
+import { DimensionsForm } from "@/components/survey/dimensions-form";
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Camera as CameraIcon, Image as ImageIcon, RefreshCcw, Eye, Wrench, Info } from "lucide-react";
@@ -56,6 +57,10 @@ export default function Capture() {
   const [photoType, setPhotoType] = useState<PhotoType | null>(null);
   const [selectedServiceItem, setSelectedServiceItem] = useState<string | null>(null);
   const [showServiceItemSearch, setShowServiceItemSearch] = useState<boolean>(false);
+  const [isPaintingItem, setIsPaintingItem] = useState<boolean>(false);
+  const [width, setWidth] = useState<string>('');
+  const [height, setHeight] = useState<string>('');
+  const [showDimensionsForm, setShowDimensionsForm] = useState<boolean>(false);
   
   const environmentId = parseInt(id || "0");
   
@@ -261,15 +266,45 @@ export default function Capture() {
   if (photoType === 'servicos_itens' && showServiceItemSearch) {
     return (
       <ServiceItemSearch 
-        onSelect={(item) => {
+        onSelect={(item, isPainting) => {
           setSelectedServiceItem(item);
+          setIsPaintingItem(isPainting);
           setShowServiceItemSearch(false);
+          
+          // Se for um item de pintura, mostrar o formulário de dimensões
+          if (isPainting) {
+            setShowDimensionsForm(true);
+          }
+          
           // Armazene o item selecionado para uso na revisão da foto
           sessionStorage.setItem('selectedServiceItem', item);
         }}
         onCancel={() => {
           setPhotoType(null);
           setShowServiceItemSearch(false);
+        }}
+      />
+    );
+  }
+  
+  // Mostrar o formulário de dimensões, se necessário
+  if (showDimensionsForm && selectedServiceItem) {
+    return (
+      <DimensionsForm
+        onConfirm={(width, height, area) => {
+          setWidth(width);
+          setHeight(height);
+          setShowDimensionsForm(false);
+          
+          // Armazenar informações de dimensões no sessionStorage
+          sessionStorage.setItem('paintingWidth', width);
+          sessionStorage.setItem('paintingHeight', height);
+          sessionStorage.setItem('paintingArea', area);
+        }}
+        onCancel={() => {
+          // Voltar para a seleção de serviço/item
+          setShowDimensionsForm(false);
+          setShowServiceItemSearch(true);
         }}
       />
     );

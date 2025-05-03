@@ -11,8 +11,13 @@ const DEFAULT_SERVICE_ITEMS = [
   "19.37 - SUBSTITUIÇÃO DE LÂMPADAS"
 ];
 
+// Identifica itens que são serviços de pintura
+const isPaintingItem = (item: string) => {
+  return item.toLowerCase().includes('pintura');
+};
+
 interface ServiceItemSearchProps {
-  onSelect: (item: string) => void;
+  onSelect: (item: string, isPainting: boolean) => void;
   onCancel: () => void;
 }
 
@@ -31,7 +36,8 @@ export function ServiceItemSearch({ onSelect, onCancel }: ServiceItemSearchProps
   
   const handleConfirm = () => {
     if (selectedServiceItem) {
-      onSelect(selectedServiceItem);
+      const isPainting = isPaintingItem(selectedServiceItem);
+      onSelect(selectedServiceItem, isPainting);
       // Força o retorno para a câmera após seleção
       setSelectedServiceItem(null);
       setSearchQuery("");
