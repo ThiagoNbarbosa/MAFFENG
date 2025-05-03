@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Ruler, Calculator } from "lucide-react";
@@ -13,33 +13,39 @@ export function DimensionsForm({ onConfirm, onCancel }: DimensionsFormProps) {
   const [height, setHeight] = useState("");
   const [calculatedArea, setCalculatedArea] = useState<string | null>(null);
   
-  const calculateArea = () => {
-    if (width && height) {
-      const numWidth = parseFloat(width.replace(',', '.'));
-      const numHeight = parseFloat(height.replace(',', '.'));
+  // Função para calcular a área automaticamente
+  const calculateArea = (w: string, h: string): string => {
+    if (w && h) {
+      const numWidth = parseFloat(w.replace(',', '.'));
+      const numHeight = parseFloat(h.replace(',', '.'));
       
       if (!isNaN(numWidth) && !isNaN(numHeight)) {
-        const area = (numWidth * numHeight).toFixed(2).replace('.', ',');
-        setCalculatedArea(area);
-        return area;
+        return (numWidth * numHeight).toFixed(2).replace('.', ',');
       }
     }
-    setCalculatedArea(null);
     return "0";
   };
   
+  // Atualiza a área sempre que a largura ou altura mudar
+  useEffect(() => {
+    if (width && height) {
+      const area = calculateArea(width, height);
+      setCalculatedArea(area);
+    } else {
+      setCalculatedArea(null);
+    }
+  }, [width, height]);
+  
   const handleWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setWidth(e.target.value);
-    setCalculatedArea(null);
   };
   
   const handleHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setHeight(e.target.value);
-    setCalculatedArea(null);
   };
   
   const handleConfirm = () => {
-    const area = calculateArea();
+    const area = calculatedArea || "0";
     onConfirm(width, height, area);
   };
   
@@ -90,19 +96,6 @@ export function DimensionsForm({ onConfirm, onCancel }: DimensionsFormProps) {
                   />
                   <Ruler className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 </div>
-              </div>
-              
-              <div className="pt-2">
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  className="w-full"
-                  disabled={!isValid}
-                  onClick={calculateArea}
-                >
-                  <Calculator className="mr-2 h-4 w-4" />
-                  Calcular Área
-                </Button>
               </div>
               
               {calculatedArea && (
