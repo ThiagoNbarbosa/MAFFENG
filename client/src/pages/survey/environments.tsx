@@ -1,13 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Survey, Environment } from "@shared/schema";
+import { Survey, Environment, Photo } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { EnvironmentDialog } from "@/components/survey/environment-dialog";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, DoorOpen, Plus, ArrowRight, Check, Search } from "lucide-react";
+import { ArrowLeft, DoorOpen, Plus, ArrowRight, Check, Search, Camera, Image, Wrench } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Logo } from "@/components/ui/logo";
 import { Input } from "@/components/ui/input";
@@ -55,6 +55,46 @@ export default function Environments() {
     queryKey: [`/api/surveys/${surveyId}/environments`],
     enabled: !isNaN(surveyId) && surveyId > 0,
   });
+  
+  // Mapa para armazenar a contagem de fotos por ambiente
+  const [photoCounts, setPhotoCounts] = useState<Record<number, Record<string, number>>>({});
+  
+  // Carrega a contagem de fotos para ambientes quando eles são carregados
+  useEffect(() => {
+    if (environments && environments.length > 0) {
+      const fetchPhotoCounts = async () => {
+        const counts: Record<number, Record<string, number>> = {};
+        
+        for (const env of environments) {
+          try {
+            const response = await fetch(`/api/environments/${env.id}/photos`);
+            if (response.ok) {
+              const photos: Photo[] = await response.json();
+              
+              // Initialize counters
+              counts[env.id] = {
+                total: photos.length,
+                vista_ampla: 0,
+                servicos_itens: 0,
+                detalhes: 0
+              };
+              
+              // Count by type
+              photos.forEach(photo => {
+                counts[env.id][photo.photoType]++;
+              });
+            }
+          } catch (error) {
+            console.error(`Erro ao carregar fotos para ambiente ${env.id}:`, error);
+          }
+        }
+        
+        setPhotoCounts(counts);
+      };
+      
+      fetchPhotoCounts();
+    }
+  }, [environments]);
   
   const createEnvironmentMutation = useMutation({
     mutationFn: async (name: string) => {
@@ -229,7 +269,26 @@ export default function Environments() {
                             </div>
                             <div>
                               <h3 className="font-bold text-gray-800">{env.name}</h3>
-                              <p className="text-xs text-gray-500">Clique para adicionar fotos</p>
+                              <div className="flex items-center mt-1">
+                                {photoCounts[env.id] ? (
+                                  <div className="flex items-center space-x-3">
+                                    <div className="flex items-center">
+                                      <Camera className="h-3 w-3 text-blue-500 mr-1" />
+                                      <span className="text-xs text-blue-600">{photoCounts[env.id].vista_ampla || 0}</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                      <Wrench className="h-3 w-3 text-green-500 mr-1" />
+                                      <span className="text-xs text-green-600">{photoCounts[env.id].servicos_itens || 0}</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                      <Image className="h-3 w-3 text-amber-500 mr-1" />
+                                      <span className="text-xs text-amber-600">{photoCounts[env.id].detalhes || 0}</span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-gray-500">Clique para adicionar fotos</p>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <ArrowRight className="h-5 w-5 text-gray-400" />
