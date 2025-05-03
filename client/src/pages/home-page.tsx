@@ -45,17 +45,17 @@ export default function HomePage() {
           <Logo size="lg" withText />
           
           <div className="text-center mt-8 mb-6">
-            <h2 className="text-2xl font-bold text-secondary">
+            <h2 className="text-2xl font-bold text-blue-800 drop-shadow-sm">
               Bem-vindo(a), {user?.username}
             </h2>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-gray-700 mt-2 font-medium">
               Selecione uma opção abaixo
             </p>
           </div>
         </div>
         
         {/* Bottom section with two option boxes */}
-        <div className="w-full max-w-md grid grid-cols-2 gap-4 mb-8">
+        <div className="w-full max-w-md grid grid-cols-1 gap-4 mb-8">
           {/* Meus Levantamentos */}
           <div 
             onClick={navigateToSurveys} 

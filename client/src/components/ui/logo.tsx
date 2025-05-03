@@ -26,21 +26,21 @@ export function Logo({
       )}>
         <div className="text-white font-bold text-center">
           {size === "sm" && (
-            <span className="text-lg">SB</span>
+            <span className="text-lg">MF</span>
           )}
           {size === "md" && (
-            <span className="text-2xl">SB</span>
+            <span className="text-2xl">MF</span>
           )}
           {size === "lg" && (
-            <span className="text-4xl">SB</span>
+            <span className="text-4xl">MF</span>
           )}
         </div>
       </div>
       
       {withText && (
         <div className="mt-2 text-center">
-          <h2 className="font-bold text-gray-800 text-lg">Survey Banco</h2>
-          <p className="text-xs text-gray-500">Levantamento de Agências</p>
+          <h2 className="font-bold text-gray-800 text-lg">MAFFENG</h2>
+          <p className="text-xs text-gray-500">Levantamento Preventivo</p>
         </div>
       )}
     </div>
