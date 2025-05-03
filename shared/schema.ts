@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -65,51 +65,6 @@ export const insertEnvironmentSchema = createInsertSchema(environments).pick({
 // Photo type enum
 export const photoTypeEnum = pgEnum('photo_type', ['vista_ampla', 'servicos_itens', 'detalhes']);
 
-// Survey Template schema
-export const surveyTemplates = pgTable("survey_templates", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  name: text("name").notNull(),
-  description: text("description"),
-  isDefault: boolean("is_default").default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const insertSurveyTemplateSchema = createInsertSchema(surveyTemplates).pick({
-  userId: true,
-  name: true,
-  description: true,
-  isDefault: true,
-});
-
-// Environment Template schema
-export const environmentTemplates = pgTable("environment_templates", {
-  id: serial("id").primaryKey(),
-  templateId: integer("template_id").notNull().references(() => surveyTemplates.id),
-  name: text("name").notNull(),
-  order: integer("order").notNull().default(0),
-});
-
-export const insertEnvironmentTemplateSchema = createInsertSchema(environmentTemplates).pick({
-  templateId: true,
-  name: true,
-  order: true,
-});
-
-// Service Item schema
-export const serviceItems = pgTable("service_items", {
-  id: serial("id").primaryKey(),
-  code: text("code").notNull(),
-  description: text("description").notNull(),
-  category: text("category"),
-});
-
-export const insertServiceItemSchema = createInsertSchema(serviceItems).pick({
-  code: true,
-  description: true,
-  category: true,
-});
-
 // Photo schema
 export const photos = pgTable("photos", {
   id: serial("id").primaryKey(),
@@ -117,7 +72,6 @@ export const photos = pgTable("photos", {
   imageData: text("image_data").notNull(), // Base64 encoded image
   observation: text("observation"),
   photoType: photoTypeEnum("photo_type").notNull(),
-  serviceItem: text("service_item"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -126,7 +80,6 @@ export const insertPhotoSchema = createInsertSchema(photos).pick({
   imageData: true,
   observation: true,
   photoType: true,
-  serviceItem: true,
 });
 
 // Type exports
