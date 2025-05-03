@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -70,16 +70,20 @@ export const photos = pgTable("photos", {
   id: serial("id").primaryKey(),
   environmentId: integer("environment_id").notNull().references(() => environments.id),
   imageData: text("image_data").notNull(), // Base64 encoded image
+  imageUrl: text("image_url"), // URL da imagem no Firebase Storage
   observation: text("observation"),
   photoType: photoTypeEnum("photo_type").notNull(),
+  paintingDimensions: json("painting_dimensions"), // Para itens de pintura: {width, height, area}
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertPhotoSchema = createInsertSchema(photos).pick({
   environmentId: true,
   imageData: true,
+  imageUrl: true,
   observation: true,
   photoType: true,
+  paintingDimensions: true,
 });
 
 // Type exports

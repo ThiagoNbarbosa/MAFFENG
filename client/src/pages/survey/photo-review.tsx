@@ -4,11 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Environment, photoTypeEnum } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { uploadImageToFirebase } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Eye, Wrench, Info, Ruler, Calculator } from "lucide-react";
+import { ArrowLeft, Eye, Wrench, Info, Ruler, Calculator, Plus, Camera, Upload } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/components/ui/logo";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 // Tipos de fotos correspondentes ao enum no banco de dados
 type PhotoType = typeof photoTypeEnum.enumValues[number];
@@ -52,6 +54,11 @@ export default function PhotoReview() {
   const [paintingHeight, setPaintingHeight] = useState<string | null>(null);
   const [paintingArea, setPaintingArea] = useState<string | null>(null);
   
+  // Estado para controle de múltiplas fotos e Firebase
+  const [isUploading, setIsUploading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [addMoreDialogOpen, setAddMoreDialogOpen] = useState(false);
+  
   const environmentId = parseInt(id || "0");
   
   const { data: environment, isLoading } = useQuery<Environment>({
@@ -92,16 +99,57 @@ export default function PhotoReview() {
     }
   }, []);
   
+  // Função para fazer upload da imagem para o Firebase
+  const uploadToFirebase = async (): Promise<string | null> => {
+    if (!photoData || !photoType || !environment) return null;
+    
+    try {
+      setIsUploading(true);
+      
+      const surveyId = environment.surveyId;
+      const timestamp = new Date().getTime();
+      const path = `surveys/${surveyId}/environments/${environmentId}/${photoType}/${timestamp}.jpg`;
+      
+      // Upload da imagem para o Firebase
+      const url = await uploadImageToFirebase(photoData, path);
+      setPhotoUrl(url);
+      
+      return url;
+    } catch (error) {
+      console.error("Erro ao fazer upload da imagem:", error);
+      toast({
+        title: "Erro ao fazer upload da imagem",
+        description: "Não foi possível enviar a imagem para o servidor",
+        variant: "destructive",
+      });
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  // Mutation para salvar a foto no banco de dados
   const savePhotoMutation = useMutation({
     mutationFn: async () => {
       if (!photoData || !photoType) throw new Error("Dados da foto incompletos");
       
+      // Fazer upload da imagem para o Firebase primeiro
+      const imageUrl = await uploadToFirebase();
+      if (!imageUrl) throw new Error("Falha ao fazer upload da imagem");
+      
+      // Depois salvar os metadados no banco
       const res = await apiRequest("POST", "/api/photos", {
         environmentId,
         imageData: photoData,
+        imageUrl,  // URL da imagem no Firebase
         observation,
-        photoType
+        photoType,
+        paintingDimensions: photoType === 'servicos_itens' && 
+                          selectedServiceItem?.toLowerCase().includes('pintura') ? 
+                          { width: paintingWidth, height: paintingHeight, area: paintingArea } : 
+                          null
       });
+      
       return res.json();
     },
     onSuccess: () => {
@@ -110,21 +158,14 @@ export default function PhotoReview() {
         description: "A foto foi salva com sucesso",
       });
       
-      // Clear stored photo data
-      sessionStorage.removeItem('capturedPhoto');
-      sessionStorage.removeItem('photoType');
-      sessionStorage.removeItem('selectedServiceItem');
-      sessionStorage.removeItem('paintingWidth');
-      sessionStorage.removeItem('paintingHeight');
-      sessionStorage.removeItem('paintingArea');
-      
-      // Navigate back to environments
-      const surveyId = environment?.surveyId;
-      if (surveyId) {
-        queryClient.invalidateQueries({ queryKey: [`/api/surveys/${surveyId}/environments`] });
-        setLocation(`/surveys/${surveyId}/environments`);
+      // Mostrar diálogo para perguntar se deseja adicionar mais fotos
+      if (photoType === 'vista_ampla' || photoType === 'detalhes') {
+        setAddMoreDialogOpen(true);
       } else {
-        setLocation('/');
+        // Se for serviços/itens, não perguntar sobre mais fotos
+        // Clear stored photo data
+        clearSessionData();
+        navigateBackToEnvironments();
       }
     },
     onError: (error: Error) => {
@@ -135,6 +176,37 @@ export default function PhotoReview() {
       });
     },
   });
+  
+  // Limpar dados da sessão
+  const clearSessionData = () => {
+    sessionStorage.removeItem('capturedPhoto');
+    sessionStorage.removeItem('photoType');
+    sessionStorage.removeItem('selectedServiceItem');
+    sessionStorage.removeItem('paintingWidth');
+    sessionStorage.removeItem('paintingHeight');
+    sessionStorage.removeItem('paintingArea');
+  };
+  
+  // Navegar de volta para a página de ambientes
+  const navigateBackToEnvironments = () => {
+    const surveyId = environment?.surveyId;
+    if (surveyId) {
+      queryClient.invalidateQueries({ queryKey: [`/api/surveys/${surveyId}/environments`] });
+      setLocation(`/surveys/${surveyId}/environments`);
+    } else {
+      setLocation('/');
+    }
+  };
+  
+  // Função para adicionar mais fotos da mesma categoria
+  const addMorePhotos = () => {
+    // Manter o tipo de foto mas limpar os outros dados
+    clearSessionData();
+    if (photoType) {
+      sessionStorage.setItem('photoType', photoType);
+    }
+    navigateToCapture();
+  };
   
   const navigateToCapture = () => {
     setLocation(`/environments/${environmentId}/capture`);
@@ -274,6 +346,41 @@ export default function PhotoReview() {
           </div>
         </div>
       </div>
+      
+      {/* Diálogo para adicionar mais fotos */}
+      <Dialog open={addMoreDialogOpen} onOpenChange={setAddMoreDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar mais fotos?</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 space-y-3">
+            <p>Deseja adicionar mais fotos de <span className="font-semibold">{selectedPhotoConfig.title}</span>?</p>
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              className="sm:flex-1" 
+              onClick={() => {
+                setAddMoreDialogOpen(false);
+                clearSessionData();
+                navigateBackToEnvironments();
+              }}
+            >
+              Não, finalizar
+            </Button>
+            <Button 
+              className="sm:flex-1"
+              onClick={() => {
+                setAddMoreDialogOpen(false);
+                addMorePhotos();
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar mais
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
