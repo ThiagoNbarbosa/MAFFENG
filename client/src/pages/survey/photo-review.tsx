@@ -101,54 +101,100 @@ export default function PhotoReview() {
   
   // Função para fazer upload da imagem para o Firebase
   const uploadToFirebase = async (): Promise<string | null> => {
-    if (!photoData || !photoType || !environment) return null;
+    console.log("Iniciando processo de upload para o Firebase");
+    
+    if (!photoData) {
+      console.error("photoData não fornecido");
+      return null;
+    }
+    
+    if (!photoType) {
+      console.error("photoType não fornecido");
+      return null;
+    }
+    
+    if (!environment) {
+      console.error("environment não fornecido");
+      return null;
+    }
     
     try {
       setIsUploading(true);
+      console.log("isUploading definido como true");
       
       const surveyId = environment.surveyId;
       const timestamp = new Date().getTime();
       const path = `surveys/${surveyId}/environments/${environmentId}/${photoType}/${timestamp}.jpg`;
+      console.log("Caminho gerado para upload:", path);
       
       // Upload da imagem para o Firebase
+      console.log("Chamando uploadImageToFirebase...");
       const url = await uploadImageToFirebase(photoData, path);
+      console.log("URL retornada do Firebase:", url);
       setPhotoUrl(url);
       
       return url;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao fazer upload da imagem:", error);
+      console.error("Detalhes do erro:", error.message);
       toast({
         title: "Erro ao fazer upload da imagem",
-        description: "Não foi possível enviar a imagem para o servidor",
+        description: `Não foi possível enviar a imagem para o servidor: ${error.message}`,
         variant: "destructive",
       });
       return null;
     } finally {
       setIsUploading(false);
+      console.log("isUploading definido como false");
     }
   };
   
   // Mutation para salvar a foto no banco de dados
   const savePhotoMutation = useMutation({
     mutationFn: async () => {
-      if (!photoData || !photoType) throw new Error("Dados da foto incompletos");
+      console.log("Iniciando savePhotoMutation");
+      if (!photoData) throw new Error("Dados da foto não encontrados");
+      if (!photoType) throw new Error("Tipo da foto não especificado");
+      
+      console.log(`Tipo de foto: ${photoType}`);
       
       // Fazer upload da imagem para o Firebase primeiro
+      console.log("Iniciando upload para o Firebase...");
       const imageUrl = await uploadToFirebase();
+      console.log("Upload para o Firebase concluido, URL:", imageUrl ? "URL obtida com sucesso" : "Falha");
       if (!imageUrl) throw new Error("Falha ao fazer upload da imagem");
       
-      // Depois salvar os metadados no banco
-      const res = await apiRequest("POST", "/api/photos", {
-        environmentId,
-        imageData: photoData,
-        imageUrl,  // URL da imagem no Firebase
-        observation,
-        photoType,
-        paintingDimensions: photoType === 'servicos_itens' && 
+      // Prepara as dimensões da pintura (se aplicavel)
+      const paintingDims = photoType === 'servicos_itens' && 
                           selectedServiceItem?.toLowerCase().includes('pintura') ? 
                           { width: paintingWidth, height: paintingHeight, area: paintingArea } : 
-                          null
+                          null;
+      
+      console.log("Dimensões da pintura:", paintingDims);
+      
+      // Prepara os dados para envio
+      const photoRequestData = {
+        environmentId,
+        imageData: photoData,
+        imageUrl,
+        observation,
+        photoType,
+        paintingDimensions: paintingDims
+      };
+      
+      console.log("Dados preparados para envio:", {
+        environmentId,
+        observation,
+        photoType,
+        paintingDimensions: paintingDims,
+        hasImageData: !!photoData,
+        hasImageUrl: !!imageUrl
       });
+      
+      // Depois salvar os metadados no banco
+      console.log("Enviando dados para a API...");
+      const res = await apiRequest("POST", "/api/photos", photoRequestData);
+      console.log("Resposta da API recebida");
       
       return res.json();
     },

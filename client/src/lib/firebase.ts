@@ -23,21 +23,30 @@ const storage = getStorage(app);
  */
 export async function uploadImageToFirebase(base64Image: string, path: string): Promise<string> {
   try {
+    console.log("Iniciando upload para o Firebase - path:", path);
+    
     // Remove o prefixo do base64 (data:image/jpeg;base64,)
     const imageData = base64Image.split(',')[1] || base64Image;
+    console.log("Dados da imagem preparados para upload");
     
     // Cria uma referência para o arquivo no storage
     const storageRef = ref(storage, path);
+    console.log("Referência do Storage criada:", path);
     
     // Faz o upload da imagem
-    await uploadString(storageRef, imageData, 'base64');
+    console.log("Iniciando uploadString...");
+    const uploadResult = await uploadString(storageRef, imageData, 'base64');
+    console.log("Upload concluído com sucesso:", uploadResult);
     
     // Obtém a URL de download da imagem
+    console.log("Obtendo URL de download...");
     const downloadURL = await getDownloadURL(storageRef);
+    console.log("URL de download obtida:", downloadURL);
     
     return downloadURL;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao fazer upload da imagem:", error);
+    console.error("Detalhes do erro:", error.message, error.code, error.serverResponse);
     throw error;
   }
 }

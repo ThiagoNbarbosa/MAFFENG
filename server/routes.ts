@@ -135,24 +135,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Photo routes
   app.post("/api/photos", ensureAuthenticated, async (req, res) => {
+    console.log("API: Recebendo solicitação para salvar foto");
     try {
+      console.log("API: Validando dados com schema...");
       const photoData = insertPhotoSchema.parse(req.body);
+      console.log("API: Dados validados com sucesso!");
       
       // Check if the environment's survey belongs to the user
+      console.log(`API: Verificando ambiente ${photoData.environmentId}...`);
       const environment = await storage.getEnvironmentById(photoData.environmentId);
       if (!environment) {
+        console.log(`API: Ambiente não encontrado: ${photoData.environmentId}`);
         return res.status(404).json({ message: "Environment not found" });
       }
+      console.log(`API: Ambiente encontrado: ${environment.name}`);
       
+      console.log(`API: Verificando pesquisa ${environment.surveyId}...`);
       const survey = await storage.getSurvey(environment.surveyId);
       if (!survey || survey.userId !== req.user.id) {
+        console.log(`API: Não autorizado. ID do usuário: ${req.user.id}, ID do proprietário: ${survey?.userId}`);
         return res.status(403).json({ message: "Unauthorized" });
       }
+      console.log(`API: Pesquisa encontrada. Usuário autorizado.`);
       
+      console.log("API: Salvando foto no banco de dados...");
       const photo = await storage.createPhoto(photoData);
+      console.log(`API: Foto salva com sucesso! ID: ${photo.id}`);
       res.status(201).json(photo);
     } catch (error) {
+      console.error("API: Erro ao salvar foto:", error);
       if (error instanceof z.ZodError) {
+        console.error("API: Erro de validação de dados:", error.errors);
         return res.status(400).json({ message: "Invalid photo data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to save photo" });

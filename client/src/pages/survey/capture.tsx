@@ -116,16 +116,23 @@ export default function Capture() {
   }, [cameraError, captureMode]);
   
   const capturePhoto = () => {
-    if (!camera || !photoType) return;
+    if (!camera || !photoType) {
+      console.error("Erro ao capturar foto: camera ou photoType não definidos");
+      return;
+    }
     
     try {
+      console.log("Iniciando captura de foto...");
       const photoData = camera.capturePhoto();
       if (photoData) {
+        console.log("Foto capturada com sucesso. Tamanho dos dados:", photoData.length);
         // Save captured photo and type in session storage
         sessionStorage.setItem('capturedPhoto', photoData);
         sessionStorage.setItem('photoType', photoType);
+        console.log("Foto salva na sessionStorage. Redirecionando para review...");
         setLocation(`/environments/${environmentId}/review`);
       } else {
+        console.error("Erro ao capturar foto: dados não retornados");
         toast({
           title: "Erro ao capturar foto",
           description: "Não foi possível capturar a foto",
@@ -133,6 +140,7 @@ export default function Capture() {
         });
       }
     } catch (error) {
+      console.error("Erro ao capturar foto:", error);
       toast({
         title: "Erro ao capturar foto",
         description: "Ocorreu um erro ao processar a imagem",
