@@ -169,73 +169,91 @@ export class Camera {
    * Captura uma foto da câmera com melhorias de qualidade
    */
   public capturePhoto(): string {
-    if (!this.videoElement || !this.hasPermission) return "";
+    console.log("Iniciando captura de foto...");
+    
+    if (!this.videoElement) {
+      console.error("Falha na captura: elemento de vídeo não inicializado");
+      return "";
+    }
+    
+    if (!this.hasPermission) {
+      console.error("Falha na captura: sem permissão para a câmera");
+      return "";
+    }
 
-    // Cria um canvas com as dimensões exatas do vídeo
-    const canvas = document.createElement("canvas");
-    const videoWidth = this.videoElement.videoWidth;
-    const videoHeight = this.videoElement.videoHeight;
-    
-    // Garante que o canvas não seja muito grande para evitar problemas de memória
-    // mas também não tão pequeno que comprometa a qualidade
-    const maxDimension = 1920; // Máximo recomendado para melhor desempenho
-    let targetWidth = videoWidth;
-    let targetHeight = videoHeight;
-    
-    // Redimensiona se necessário, mantendo a proporção
-    if (videoWidth > maxDimension || videoHeight > maxDimension) {
-      if (videoWidth > videoHeight) {
-        targetWidth = maxDimension;
-        targetHeight = Math.floor(videoHeight * (maxDimension / videoWidth));
-      } else {
-        targetHeight = maxDimension;
-        targetWidth = Math.floor(videoWidth * (maxDimension / videoHeight));
-      }
-    }
-    
-    // Define as dimensões do canvas
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    
-    const context = canvas.getContext("2d", { alpha: false, willReadFrequently: true });
-    if (!context) return "";
-    
-    // Aplica configurações de suavização para melhorar a qualidade
-    context.imageSmoothingEnabled = true;
-    context.imageSmoothingQuality = "high";
-    
-    // Desenha a imagem no canvas
-    context.drawImage(this.videoElement, 0, 0, targetWidth, targetHeight);
-    
-    // Aplica melhorias de imagem
     try {
-      const imageData = context.getImageData(0, 0, targetWidth, targetHeight);
-      const data = imageData.data;
+      // Cria um canvas com as dimensões exatas do vídeo
+      const canvas = document.createElement("canvas");
+      const videoWidth = this.videoElement.videoWidth;
+      const videoHeight = this.videoElement.videoHeight;
       
-      // Aplica ajustes de brilho e contraste
-      const brightness = 1.1;  // 10% mais brilho
-      const contrast = 1.1;    // 10% mais contraste
+      console.log(`Dimensões originais do vídeo: ${videoWidth}x${videoHeight}`);
       
-      for (let i = 0; i < data.length; i += 4) {
-        // Aplica brilho e contraste
-        data[i] = Math.min(255, Math.max(0, ((data[i] - 128) * contrast + 128) * brightness));     // R
-        data[i+1] = Math.min(255, Math.max(0, ((data[i+1] - 128) * contrast + 128) * brightness)); // G
-        data[i+2] = Math.min(255, Math.max(0, ((data[i+2] - 128) * contrast + 128) * brightness)); // B
-        
-        // Mantém Alpha como está
-        // data[i+3] = data[i+3];
+      // Garante que o canvas não seja muito grande para evitar problemas de memória
+      // mas também não tão pequeno que comprometa a qualidade
+      const maxDimension = 1280; // Reduzido para garantir melhor compatibilidade
+      let targetWidth = videoWidth;
+      let targetHeight = videoHeight;
+      
+      // Redimensiona se necessário, mantendo a proporção
+      if (videoWidth > maxDimension || videoHeight > maxDimension) {
+        if (videoWidth > videoHeight) {
+          targetWidth = maxDimension;
+          targetHeight = Math.floor(videoHeight * (maxDimension / videoWidth));
+        } else {
+          targetHeight = maxDimension;
+          targetWidth = Math.floor(videoWidth * (maxDimension / videoHeight));
+        }
+        console.log(`Imagem redimensionada para: ${targetWidth}x${targetHeight}`);
       }
       
-      context.putImageData(imageData, 0, 0);
+      // Define as dimensões do canvas
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
       
-      console.log(`Foto capturada: ${targetWidth}x${targetHeight}`);
-    } catch (e) {
-      console.error("Erro ao processar imagem:", e);
-      // Continua mesmo se o processamento falhar
+      const context = canvas.getContext("2d", { alpha: false, willReadFrequently: true });
+      if (!context) {
+        console.error("Falha na captura: não foi possível obter o contexto 2D");
+        return "";
+      }
+      
+      // Aplica configurações de suavização para melhorar a qualidade
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      
+      // Desenha a imagem no canvas
+      context.drawImage(this.videoElement, 0, 0, targetWidth, targetHeight);
+      console.log("Imagem desenhada no canvas");
+      
+      // Aplica melhorias de imagem - versão simplificada para maior compatibilidade
+      try {
+        console.log("Aplicando filtros básicos para melhorar a qualidade");
+        
+        // Usa filtros CSS que são mais eficientes que manipular pixel por pixel
+        context.filter = "brightness(1.05) contrast(1.05) saturate(1.1)";
+        context.drawImage(canvas, 0, 0);
+        context.filter = "none";
+      } catch (e) {
+        console.error("Erro ao aplicar filtros de imagem:", e);
+        // Continua mesmo se o processamento falhar
+      }
+      
+      // Gera o base64 - menor qualidade (0.85) para reduzir tamanho e melhorar upload
+      console.log("Gerando base64 da imagem...");
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+      
+      // Verifica se o dataUrl foi gerado corretamente
+      if (!dataUrl || dataUrl === "data:,") {
+        console.error("Erro: dataUrl inválido gerado");
+        return "";
+      }
+      
+      console.log(`Foto capturada com sucesso. Tamanho aproximado: ${Math.round(dataUrl.length / 1024)}KB`);
+      return dataUrl;
+    } catch (error) {
+      console.error("Erro inesperado ao capturar foto:", error);
+      return "";
     }
-    
-    // Usa formato JPEG com alta qualidade (90%) para melhor desempenho e qualidade
-    return canvas.toDataURL("image/jpeg", 0.9);
   }
   
   /**
