@@ -172,11 +172,11 @@ export default function PhotoReview() {
       
       console.log("Dimensões da pintura:", paintingDims);
       
-      // Prepara os dados para envio
+      // Prepara os dados para envio - não incluímos o imageData aqui para evitar problemas de tamanho
       const photoRequestData = {
         environmentId,
-        imageData: photoData,
-        imageUrl,
+        // Não enviar imageData para o banco de dados
+        imageUrl, // Apenas a URL do Firebase
         observation,
         photoType,
         paintingDimensions: paintingDims
@@ -187,7 +187,6 @@ export default function PhotoReview() {
         observation,
         photoType,
         paintingDimensions: paintingDims,
-        hasImageData: !!photoData,
         hasImageUrl: !!imageUrl
       });
       

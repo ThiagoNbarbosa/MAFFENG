@@ -77,14 +77,18 @@ export const photos = pgTable("photos", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertPhotoSchema = createInsertSchema(photos).pick({
-  environmentId: true,
-  imageData: true,
-  imageUrl: true,
-  observation: true,
-  photoType: true,
-  paintingDimensions: true,
-});
+// Schema de inserção com imageData opcional
+export const insertPhotoSchema = createInsertSchema(photos)
+  .pick({
+    environmentId: true,
+    imageUrl: true,  // URL da imagem no Firebase é obrigatório
+    observation: true,
+    photoType: true,
+    paintingDimensions: true,
+  })
+  .partial({
+    imageData: true, // Campo imageData é opcional
+  });
 
 // Type exports
 export type User = typeof users.$inferSelect;

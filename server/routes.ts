@@ -138,8 +138,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("API: Recebendo solicitação para salvar foto");
     try {
       console.log("API: Validando dados com schema...");
+      
+      // Verifica se a URL da imagem foi fornecida
+      if (!req.body.imageUrl) {
+        console.error("API: URL da imagem ausente");
+        return res.status(400).json({ message: "Image URL is required" });
+      }
+      
+      // Validando os dados com o schema
       const photoData = insertPhotoSchema.parse(req.body);
       console.log("API: Dados validados com sucesso!");
+      
+      // Log dos dados recebidos
+      console.log("API: Dados recebidos:", {
+        environmentId: photoData.environmentId,
+        hasImageUrl: !!photoData.imageUrl,
+        observation: photoData.observation ? 'presente' : 'ausente',
+        photoType: photoData.photoType,
+        hasPaintingDimensions: !!photoData.paintingDimensions
+      });
       
       // Check if the environment's survey belongs to the user
       console.log(`API: Verificando ambiente ${photoData.environmentId}...`);
@@ -158,8 +175,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.log(`API: Pesquisa encontrada. Usuário autorizado.`);
       
+      // Preparar dados para criação da foto
+      const photoInsertData = {
+        ...photoData,
+        // Se não tivermos imageData, usamos um valor padrão vazio
+        imageData: photoData.imageData || ''
+      };
+      
       console.log("API: Salvando foto no banco de dados...");
-      const photo = await storage.createPhoto(photoData);
+      const photo = await storage.createPhoto(photoInsertData);
       console.log(`API: Foto salva com sucesso! ID: ${photo.id}`);
       res.status(201).json(photo);
     } catch (error) {
