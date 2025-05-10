@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Camera, Sun, Moon, User, MessageCircle, ArrowLeft } from "lucide-react";
@@ -9,22 +9,29 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/hooks/use-theme";
 
 export default function AccountPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
   
-  // Estado para controle de modo escuro (por enquanto apenas visual)
-  const [darkMode, setDarkMode] = useState(false);
+  // Estado que reflete o tema atual
+  const [isDarkMode, setIsDarkMode] = useState(theme === "dark");
+  
+  // Atualiza o estado local quando o tema mudar
+  useEffect(() => {
+    setIsDarkMode(theme === "dark");
+  }, [theme]);
   
   // Estado para diálogo de suporte
   const [supportDialogOpen, setSupportDialogOpen] = useState(false);
   
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
+  const handleToggleDarkMode = () => {
+    toggleTheme();
     toast({
-      title: `Modo ${!darkMode ? "escuro" : "claro"} ativado`,
+      title: `Modo ${isDarkMode ? "claro" : "escuro"} ativado`,
       description: "A configuração foi salva.",
     });
   };
@@ -38,9 +45,9 @@ export default function AccountPage() {
   };
   
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-sky-100">
+    <div className="flex flex-col min-h-screen bg-background">
       {/* Header */}
-      <header className="p-4 flex justify-between items-center shadow-sm bg-white">
+      <header className="p-4 flex justify-between items-center shadow-sm bg-card">
         <Button
           variant="ghost"
           size="icon"
@@ -55,7 +62,7 @@ export default function AccountPage() {
       {/* Main Content */}
       <main className="flex-1 p-6 max-w-md mx-auto w-full">
         {/* Perfil */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="bg-card rounded-xl shadow-md p-6 mb-6 text-card-foreground">
           <div className="flex items-center space-x-4 mb-6">
             <Avatar className="h-16 w-16 border-2 border-blue-100">
               <AvatarImage src="" alt={user?.username || ""} />
@@ -78,14 +85,14 @@ export default function AccountPage() {
         </div>
         
         {/* Configurações */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="bg-card rounded-xl shadow-md p-6 mb-6 text-card-foreground">
           <h3 className="font-semibold text-lg mb-4">Configurações</h3>
           
           <div className="space-y-4">
             {/* Modo escuro */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                {darkMode ? (
+                {isDarkMode ? (
                   <Moon className="h-5 w-5 text-blue-600" />
                 ) : (
                   <Sun className="h-5 w-5 text-amber-500" />
@@ -96,8 +103,8 @@ export default function AccountPage() {
               </div>
               <Switch 
                 id="dark-mode" 
-                checked={darkMode} 
-                onCheckedChange={toggleDarkMode} 
+                checked={isDarkMode} 
+                onCheckedChange={handleToggleDarkMode} 
               />
             </div>
             
