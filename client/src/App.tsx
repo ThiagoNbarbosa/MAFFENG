@@ -14,6 +14,7 @@ import Environments from "@/pages/survey/environments";
 import Capture from "@/pages/survey/capture";
 import PhotoReview from "@/pages/survey/photo-review";
 import SurveysPage from "@/pages/surveys-page";
+import { ThemeProvider } from "@/components/theme-provider";
 
 function Router() {
   return (
@@ -34,12 +35,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </AuthProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
