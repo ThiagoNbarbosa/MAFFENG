@@ -14,7 +14,7 @@ import Environments from "@/pages/survey/environments";
 import Capture from "@/pages/survey/capture";
 import PhotoReview from "@/pages/survey/photo-review";
 import SurveysPage from "@/pages/surveys-page";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "next-themes";
 
 function Router() {
   return (

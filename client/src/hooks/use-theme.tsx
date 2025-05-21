@@ -1,16 +1,34 @@
 import { useTheme as useNextTheme } from "next-themes"
+import { useEffect, useState } from "react"
 
 export function useTheme() {
-  const { theme, setTheme } = useNextTheme()
+  const [mounted, setMounted] = useState(false)
+  const { theme, setTheme, resolvedTheme } = useNextTheme()
+  
+  // Efeito para garantir renderização do lado do cliente
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark")
+    const currentTheme = resolvedTheme || theme
+    setTheme(currentTheme === "dark" ? "light" : "dark")
+  }
+
+  // Durante a montagem do componente, usamos valores padrão
+  if (!mounted) {
+    return {
+      theme: "light",
+      setTheme: () => {},
+      toggleTheme: () => {},
+      isDark: false
+    }
   }
 
   return {
     theme,
     setTheme,
     toggleTheme,
-    isDark: theme === "dark"
+    isDark: resolvedTheme === "dark" || theme === "dark"
   }
 }
