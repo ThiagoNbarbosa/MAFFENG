@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Environment, photoTypeEnum } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { uploadImageToFirebase } from "@/lib/firebase";
+import { uploadImageToFirebase, generateFirebasePath } from "@/lib/firebase";
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye, Wrench, Info, Ruler, Calculator, Plus, Camera, Upload } from "lucide-react";
@@ -123,13 +123,43 @@ export default function PhotoReview() {
       console.log("isUploading definido como true");
       
       const surveyId = environment.surveyId;
-      const timestamp = new Date().getTime();
-      const path = `surveys/${surveyId}/environments/${environmentId}/${photoType}/${timestamp}.jpg`;
-      console.log("Caminho gerado para upload:", path);
       
-      // Upload da imagem para o Firebase
-      console.log("Chamando uploadImageToFirebase...");
-      const url = await uploadImageToFirebase(photoData, path);
+      // Usar a função de geração de caminhos para criar um caminho estruturado
+      const path = generateFirebasePath(
+        surveyId, 
+        environmentId, 
+        photoType, 
+        selectedServiceItem || undefined
+      );
+      console.log("Caminho estruturado gerado para upload:", path);
+      
+      // Preparar metadados adicionais para o arquivo
+      const metadata: Record<string, string> = {
+        environmentName: environment.name,
+        photoType: photoType,
+        createdAt: new Date().toISOString(),
+      };
+      
+      // Adicionar metadados específicos baseados no tipo de foto
+      if (photoType === 'servicos_itens' && selectedServiceItem) {
+        metadata.serviceItem = selectedServiceItem;
+        
+        // Se for pintura, incluir as dimensões nos metadados
+        if (selectedServiceItem.toLowerCase().includes('pintura') && 
+            paintingWidth && paintingHeight && paintingArea) {
+          metadata.paintingWidth = paintingWidth;
+          metadata.paintingHeight = paintingHeight;
+          metadata.paintingArea = paintingArea;
+        }
+      }
+      
+      if (observation) {
+        metadata.observation = observation;
+      }
+      
+      // Upload da imagem para o Firebase com metadados
+      console.log("Chamando uploadImageToFirebase com metadados...");
+      const url = await uploadImageToFirebase(photoData, path, metadata);
       console.log("URL retornada do Firebase:", url);
       setPhotoUrl(url);
       
