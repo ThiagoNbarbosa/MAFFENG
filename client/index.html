@@ -7,8 +7,34 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- SDK Firebase (versão 11.8.1, mais recente) -->
+    <script type="module">
+      // Importando funções necessárias do SDK Firebase
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+      import { getStorage } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-storage.js";
+
+      // Configuração do Firebase do seu projeto
+      const firebaseConfig = {
+        apiKey: "AIzaSyAk4FDLm5-3MEbS_FrqpIGrH24NQSo6204",
+        authDomain: "maffeng-tms.firebaseapp.com",
+        projectId: "maffeng-tms",
+        storageBucket: "maffeng-tms.appspot.com",
+        messagingSenderId: "969645151863",
+        appId: "1:969645151863:web:2ce1c0ce03830a04e39872"
+      };
+
+      // Inicializa Firebase
+      const app = initializeApp(firebaseConfig);
+      const storage = getStorage(app);
+
+      // Verifica inicialização
+      console.log("Firebase inicializado com sucesso:", app);
+      console.log("Firebase Storage disponível:", storage);
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
-    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+    <!-- Script do Replit -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
 </html>
