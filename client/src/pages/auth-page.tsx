@@ -2,7 +2,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { Redirect } from "wouter";
 
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,8 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function AuthPage() {
-  const { user, loginMutation } = useAuth();
+  const { user, signIn, isLoading } = useSupabaseAuth();
+  const [isSigningIn, setIsSigningIn] = useState(false);
   
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -42,8 +43,10 @@ export default function AuthPage() {
     },
   });
   
-  const onLoginSubmit = (values: LoginFormValues) => {
-    loginMutation.mutate(values);
+  const onLoginSubmit = async (values: LoginFormValues) => {
+    setIsSigningIn(true);
+    const { error } = await signIn(values.email, values.password);
+    setIsSigningIn(false);
   };
   
   // Redirect if user is already logged in
@@ -97,9 +100,9 @@ export default function AuthPage() {
               <Button 
                 type="submit" 
                 className="w-full py-6 text-lg font-medium mt-6" 
-                disabled={loginMutation.isPending}
+                disabled={isSigningIn}
               >
-                {loginMutation.isPending ? "Entrando..." : "Entrar"}
+                {isSigningIn ? "Entrando..." : "Entrar"}
               </Button>
             </form>
           </Form>

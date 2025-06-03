@@ -1,48 +1,19 @@
-import React from "react";
 import { cn } from "@/lib/utils";
 
-interface LogoProps extends React.HTMLAttributes<HTMLDivElement> {
-  size?: "sm" | "md" | "lg";
-  withText?: boolean;
+interface LogoProps {
+  className?: string;
 }
 
-export function Logo({ 
-  size = "md", 
-  withText = false,
-  className,
-  ...props 
-}: LogoProps) {
-  const sizeClasses = {
-    sm: "w-12 h-12",
-    md: "w-20 h-20",
-    lg: "w-32 h-32"
-  };
-
+export function Logo({ className }: LogoProps) {
   return (
-    <div className={cn("flex flex-col items-center", className)} {...props}>
-      <div className={cn(
-        "rounded-full bg-gradient-to-r from-blue-600 to-sky-400 flex items-center justify-center overflow-hidden shadow-lg",
-        sizeClasses[size]
-      )}>
-        <div className="text-white font-bold text-center">
-          {size === "sm" && (
-            <span className="text-lg">MF</span>
-          )}
-          {size === "md" && (
-            <span className="text-2xl">MF</span>
-          )}
-          {size === "lg" && (
-            <span className="text-4xl">MF</span>
-          )}
-        </div>
+    <div className={cn("flex items-center space-x-2", className)}>
+      <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+        <span className="text-primary-foreground font-bold text-sm">M</span>
       </div>
-      
-      {withText && (
-        <div className="mt-2 text-center">
-          <h2 className="font-bold text-gray-800 text-lg">MAFFENG</h2>
-          <p className="text-xs text-gray-500">Levantamento Preventivo</p>
-        </div>
-      )}
+      <div className="flex flex-col">
+        <span className="text-lg font-bold text-foreground">MAFFENG</span>
+        <span className="text-xs text-muted-foreground">Levantamento Preventivo</span>
+      </div>
     </div>
   );
 }
