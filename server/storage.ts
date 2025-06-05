@@ -32,26 +32,7 @@ export class DatabaseStorage implements IStorage {
     // No session store needed with Supabase auth
   }
 
-  // User methods
-  async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
-  }
-  
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
-  }
+  // User management is handled by Supabase Auth
   
   // Survey methods
   async createSurvey(insertSurvey: InsertSurvey): Promise<Survey> {
@@ -64,7 +45,7 @@ export class DatabaseStorage implements IStorage {
     return survey;
   }
   
-  async getSurveysByUserId(userId: number): Promise<Survey[]> {
+  async getSurveysByUserId(userId: string): Promise<Survey[]> {
     return await db.select()
       .from(surveys)
       .where(eq(surveys.userId, userId))
