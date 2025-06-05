@@ -20,7 +20,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 // Survey schema
 export const surveys = pgTable("surveys", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  userId: text("user_id").notNull(), // Supabase user ID is a string
   agencyName: text("agency_name").notNull(),
   prefix: text("prefix").notNull(),
   // Endereço

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, authenticateToken } from "./auth";
 import { z } from "zod";
 import { insertSurveySchema, insertEnvironmentSchema, insertPhotoSchema } from "@shared/schema";
 import express from "express";
@@ -11,46 +11,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(express.json({limit: '100mb'}));
   app.use(express.urlencoded({limit: '100mb', extended: true}));
   app.use(express.raw({limit: '100mb'}));
+  
   // Setup auth routes
   setupAuth(app);
 
-  // API middleware to ensure user is authenticated
-  const ensureAuthenticated = (req: any, res: any, next: any) => {
-    if (req.isAuthenticated()) {
-      return next();
-    }
-    res.status(401).json({ message: "Unauthorized" });
-  };
-
-  // Middleware para verificar se o usuário é admin
+  // Middleware para verificar se o usuário é admin (usando email para identificar admin)
   const ensureAdmin = (req: any, res: any, next: any) => {
-    if (req.isAuthenticated() && req.user.username === "admin") {
+    if (req.user && req.user.email === "admin@maffeng.com") {
       return next();
     }
     res.status(403).json({ message: "Forbidden - Admin access required" });
   };
 
-  // Rotas administrativas
-  app.get("/api/admin/users", ensureAdmin, async (req, res) => {
-    try {
-      const allUsers = await storage.getAllUsers();
-      res.json(allUsers);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch users" });
-    }
-  });
-
-  app.get("/api/admin/surveys", ensureAdmin, async (req, res) => {
-    try {
-      const allSurveys = await storage.getAllSurveys();
-      res.json(allSurveys);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch surveys" });
-    }
-  });
+  // Admin routes removed - user management handled by Supabase Auth
 
   // Survey routes
-  app.post("/api/surveys", ensureAuthenticated, async (req, res) => {
+  app.post("/api/surveys", authenticateToken, async (req, res) => {
     try {
       const surveyData = insertSurveySchema.parse({
         ...req.body,
@@ -67,16 +43,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/surveys", ensureAuthenticated, async (req, res) => {
+  app.get("/api/surveys", authenticateToken, async (req, res) => {
     try {
-      const surveys = await storage.getSurveysByUserId(req.user.id);
+      const surveys = await storage.getSurveysByUserId(req.user!.id);
       res.json(surveys);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch surveys" });
     }
   });
 
-  app.get("/api/surveys/:id", ensureAuthenticated, async (req, res) => {
+  app.get("/api/surveys/:id", authenticateToken, async (req, res) => {
     try {
       const surveyId = parseInt(req.params.id);
       const survey = await storage.getSurvey(surveyId);
@@ -85,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Survey not found" });
       }
       
-      if (survey.userId !== req.user.id) {
+      if (survey.userId !== req.user!.id) {
         return res.status(403).json({ message: "Unauthorized" });
       }
       
@@ -96,13 +72,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Environment routes
-  app.post("/api/environments", ensureAuthenticated, async (req, res) => {
+  app.post("/api/environments", authenticateToken, async (req, res) => {
     try {
       const environmentData = insertEnvironmentSchema.parse(req.body);
       
       // Check if the survey belongs to the user
       const survey = await storage.getSurvey(environmentData.surveyId);
-      if (!survey || survey.userId !== req.user.id) {
+      if (!survey || survey.userId !== req.user!.id) {
         return res.status(403).json({ message: "Unauthorized" });
       }
       
@@ -116,13 +92,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/surveys/:surveyId/environments", ensureAuthenticated, async (req, res) => {
+  app.get("/api/surveys/:surveyId/environments", authenticateToken, async (req, res) => {
     try {
       const surveyId = parseInt(req.params.surveyId);
       
       // Check if the survey belongs to the user
       const survey = await storage.getSurvey(surveyId);
-      if (!survey || survey.userId !== req.user.id) {
+      if (!survey || survey.userId !== req.user!.id) {
         return res.status(403).json({ message: "Unauthorized" });
       }
       
@@ -134,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Photo routes
-  app.post("/api/photos", ensureAuthenticated, async (req, res) => {
+  app.post("/api/photos", authenticateToken, async (req, res) => {
     console.log("API: Recebendo solicitação para salvar foto");
     try {
       console.log("API: Validando dados com schema...");
