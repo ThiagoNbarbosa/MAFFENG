@@ -30,7 +30,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const surveyData = insertSurveySchema.parse({
         ...req.body,
-        userId: req.user.id
+        userId: req.user!.id
       });
       
       const survey = await storage.createSurvey(surveyData);
@@ -145,8 +145,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`API: Verificando pesquisa ${environment.surveyId}...`);
       const survey = await storage.getSurvey(environment.surveyId);
-      if (!survey || survey.userId !== req.user.id) {
-        console.log(`API: Não autorizado. ID do usuário: ${req.user.id}, ID do proprietário: ${survey?.userId}`);
+      if (!survey || survey.userId !== req.user!.id) {
+        console.log(`API: Não autorizado. ID do usuário: ${req.user!.id}, ID do proprietário: ${survey?.userId}`);
         return res.status(403).json({ message: "Unauthorized" });
       }
       console.log(`API: Pesquisa encontrada. Usuário autorizado.`);
@@ -155,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const photoInsertData = {
         ...photoData,
         // Se não tivermos imageData, usamos um valor padrão vazio
-        imageData: photoData.imageData || ''
+        imageData: photoData.imageUrl || ''
       };
       
       console.log("API: Salvando foto no banco de dados...");
@@ -172,7 +172,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/environments/:environmentId/photos", ensureAuthenticated, async (req, res) => {
+  app.get("/api/environments/:environmentId/photos", authenticateToken, async (req, res) => {
     try {
       const environmentId = parseInt(req.params.environmentId);
       
@@ -183,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const survey = await storage.getSurvey(environment.surveyId);
-      if (!survey || survey.userId !== req.user.id) {
+      if (!survey || survey.userId !== req.user!.id) {
         return res.status(403).json({ message: "Unauthorized" });
       }
       

@@ -75,8 +75,18 @@ export class DatabaseStorage implements IStorage {
   
   // Photo methods
   async createPhoto(insertPhoto: InsertPhoto): Promise<Photo> {
+    // Ensure required fields are present with defaults
+    const photoData = {
+      environmentId: insertPhoto.environmentId!,
+      photoType: insertPhoto.photoType!,
+      imageData: insertPhoto.imageData || "",
+      imageUrl: insertPhoto.imageUrl || null,
+      observation: insertPhoto.observation || null,
+      paintingDimensions: insertPhoto.paintingDimensions || null,
+    };
+    
     const [photo] = await db.insert(photos)
-      .values(insertPhoto)
+      .values(photoData)
       .returning();
     return photo;
   }

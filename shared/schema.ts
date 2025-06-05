@@ -69,25 +69,22 @@ export const photoTypeEnum = pgEnum('photo_type', ['vista_ampla', 'servicos_iten
 export const photos = pgTable("photos", {
   id: serial("id").primaryKey(),
   environmentId: integer("environment_id").notNull().references(() => environments.id),
-  imageData: text("image_data").notNull(), // Base64 encoded image
-  imageUrl: text("image_url"), // URL da imagem no Firebase Storage
+  imageData: text("image_data").default(""), // Base64 encoded image or empty string
+  imageUrl: text("image_url"), // URL da imagem no Supabase Storage
   observation: text("observation"),
   photoType: photoTypeEnum("photo_type").notNull(),
   paintingDimensions: json("painting_dimensions"), // Para itens de pintura: {width, height, area}
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Schema de inserção com imageData opcional
+// Schema de inserção com campos opcionais
 export const insertPhotoSchema = createInsertSchema(photos)
-  .pick({
-    environmentId: true,
-    imageUrl: true,  // URL da imagem no Firebase é obrigatório
+  .omit({ id: true, createdAt: true })
+  .partial({ 
+    imageData: true,
+    imageUrl: true,
     observation: true,
-    photoType: true,
-    paintingDimensions: true,
-  })
-  .partial({
-    imageData: true, // Campo imageData é opcional
+    paintingDimensions: true
   });
 
 // Type exports
