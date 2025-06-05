@@ -1,9 +1,6 @@
 import { users, User, InsertUser, surveys, Survey, InsertSurvey, environments, Environment, InsertEnvironment, photos, Photo, InsertPhoto } from "@shared/schema";
-import connectPgSimple from "connect-pg-simple";
-import session from "express-session";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import { pool } from "./db";
 
 // Métodos administrativos
 export const getAllUsers = async (): Promise<User[]> => {
@@ -14,19 +11,11 @@ export const getAllSurveys = async (): Promise<Survey[]> => {
   return await db.select().from(surveys);
 };
 
-const PostgresSessionStore = connectPgSimple(session);
-
 export interface IStorage {
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  
   // Survey methods
   createSurvey(survey: InsertSurvey): Promise<Survey>;
   getSurvey(id: number): Promise<Survey | undefined>;
-  getSurveysByUserId(userId: number): Promise<Survey[]>;
+  getSurveysByUserId(userId: string): Promise<Survey[]>;
   
   // Environment methods
   createEnvironment(environment: InsertEnvironment): Promise<Environment>;
@@ -36,19 +25,11 @@ export interface IStorage {
   // Photo methods
   createPhoto(photo: InsertPhoto): Promise<Photo>;
   getPhotosByEnvironmentId(environmentId: number): Promise<Photo[]>;
-  
-  // Session store
-  sessionStore: session.Store;
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.Store;
-
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true 
-    });
+    // No session store needed with Supabase auth
   }
 
   // User methods
